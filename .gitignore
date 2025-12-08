@@ -1,41 +1,40 @@
-# Prerequisites
-*.d
+# IDE and Editor Co# IDE and Editor Configurations
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
 
-# Compiled Object files
-*.slo
-*.lo
+# Build Artifacts
+build/
+dist/
+out/
+*.log
+
+# Dependencies
+node_modules/
+vendor/
+
+# Environment Variables
+.env
+
+# OS-Generated Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Compiled Code
+*.class
 *.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Linker files
-*.ilk
-
-# Debugger Files
-*.pdb
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
 *.a
-*.lib
 
-# Executables
-*.exe
-*.out
-*.app
+# Other Configurations
+*.swp
+*.swo
+.pytest_cache/
+.coverage
 
-# debug information files
-*.dwo
+compile_commands.json
+.cache
+CPM_modules/
+
+
