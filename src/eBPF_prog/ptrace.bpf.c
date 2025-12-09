@@ -24,8 +24,7 @@ int ptrace_entry(struct trace_event_raw_sys_enter *ctx)
         return 0;
 
     struct ptrace_event *e = bpf_ringbuf_reserve(&rb, sizeof(struct ptrace_event), 0);
-    if (!e)
-        return 0;
+    if (!e) return 0;
 
     e->caller = caller;
     e->target = target;
