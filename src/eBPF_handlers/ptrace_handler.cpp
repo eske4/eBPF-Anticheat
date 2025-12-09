@@ -6,7 +6,7 @@
 static int handle_event(void *ctx, void *data, size_t data_sz)
 {
     const struct ptrace_event *e = (ptrace_event *)data;
-    std::cout << "ptrace called by "<< e->caller_name
+    std::cout << "ptrace called by " << e->caller_name
               << " (pid " << e->caller
               << "), attaching to proc " << e->target
               << std::endl;
@@ -35,7 +35,11 @@ int ptrace_handler::LoadAndAttachAll(pid_t protected_pid)
         return err;
     }
 
-    this->rb = ring_buffer__new(bpf_map__fd(skel_obj.get()->maps.rb), handle_event, nullptr, nullptr);
+    this->rb = ring_buffer__new(
+        bpf_map__fd(skel_obj.get()->maps.rb),
+        handle_event,
+        nullptr,
+        nullptr);
 
     err = ptrace__attach(skel_obj.get());
     if (err)
