@@ -2,14 +2,11 @@
 #include <bpf/libbpf.h>
 #include <iostream>
 #include "../shared.h"
+#include "string.h"
 
-static int handle_event(void *ctx, void *data, size_t data_sz)
+int handle_event(void *ctx, void *data, size_t data_sz)
 {
-    const struct ptrace_event *e = static_cast<ptrace_event*>(data);
-    std::cout << "ptrace called by " << e->caller_name
-              << " (pid " << e->caller
-              << "), attaching to proc " << e->target
-              << std::endl;
+    memmove(ctx, data, data_sz);
     return 0;
 }
 
@@ -38,7 +35,7 @@ int ptrace_handler::LoadAndAttachAll(pid_t protected_pid)
     auto buf = ring_buffer__new(
         bpf_map__fd(skel_obj.get()->maps.rb),
         handle_event,
-        nullptr,
+        &this->data,
         nullptr);
     rb.reset(buf);
 
@@ -67,6 +64,11 @@ void ptrace_handler::DetachAndUnloadAll()
     run = false;
     loop_thread.wait();
     std::cout << "ptrace eBPF program detached and unloaded." << std::endl;
+}
+
+const ptrace_event ptrace_handler::GetData()
+{
+    return data;
 }
 
 ptrace_handler::~ptrace_handler() { DetachAndUnloadAll(); }

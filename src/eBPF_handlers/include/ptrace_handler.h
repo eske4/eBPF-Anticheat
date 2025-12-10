@@ -2,6 +2,7 @@
 #include "ptrace.skel.h"
 #include <memory>
 #include <future>
+#include "../../shared.h"
 
 class ptrace_handler {
 public:
@@ -12,10 +13,9 @@ public:
   /// @param protected_pid The pid of the game/process to protect
   int LoadAndAttachAll(pid_t protected_pid);
   void DetachAndUnloadAll();
+  const struct ptrace_event GetData();
 
 private:
-    void loop_func();
-
   std::unique_ptr<struct ptrace, decltype(&ptrace__destroy)>
       skel_obj{nullptr, ptrace__destroy};
 
@@ -24,4 +24,5 @@ private:
 
   std::future<void> loop_thread;
   bool run = true;
+  struct ptrace_event data;
 };

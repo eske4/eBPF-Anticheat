@@ -1,5 +1,6 @@
 #include "module_handler.h"
 #include "ptrace_handler.h"
+#include "ptrace_agent.h"
 #include <iostream>
 
 int main() {
@@ -8,10 +9,11 @@ int main() {
   pid_t protected_pid = 37091;
 
   module_handler handler;
-  ptrace_handler ptrace_handler;
+  //ptrace_handler ptrace_handler;
+  ptrace_agent ptrace_agent;
 
   // 1. Load and Attach
-  if (handler.LoadAndAttachAll() != 0 || ptrace_handler.LoadAndAttachAll(protected_pid) != 0) {
+  if (handler.LoadAndAttachAll() != 0) {
     std::cerr << "FATAL: Failed to load eBPF programs. Check dmesg/permissions."
               << std::endl;
     return 1;
@@ -30,6 +32,7 @@ int main() {
   std::string temp;
   std::getline(std::cin, temp);
 
+  ptrace_agent.print_ptrace();
 
   return 0;
 }
