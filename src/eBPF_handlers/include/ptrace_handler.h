@@ -19,8 +19,9 @@ private:
   std::unique_ptr<struct ptrace, decltype(&ptrace__destroy)>
       skel_obj{nullptr, ptrace__destroy};
 
-    struct ring_buffer *rb = nullptr;
+  std::unique_ptr<struct ring_buffer, decltype(&ring_buffer__free)>
+      rb{nullptr, ring_buffer__free};
 
-    std::future<void> loop_thread;
-    bool run = true;
+  std::future<void> loop_thread;
+  bool run = true;
 };
