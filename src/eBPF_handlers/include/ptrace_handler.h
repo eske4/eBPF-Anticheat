@@ -5,8 +5,8 @@
 
 class ptrace_handler {
 public:
-  /// @param onEvent A function that runs when new data arrives from eBPF programs
-  ptrace_handler(std::function<void(ptrace_event)> onEvent);
+  /// @param on_event A function that runs when new data arrives from eBPF programs
+  ptrace_handler(std::function<void(ptrace_event)> on_event);
 
   ~ptrace_handler();
 
@@ -27,5 +27,5 @@ private:
 
   bool run;
   std::future<void> loop_thread;
-  std::function<void(ptrace_event)> onEvent;
+  std::function<void(ptrace_event)> on_event;
 };

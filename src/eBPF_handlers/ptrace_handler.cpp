@@ -10,7 +10,7 @@ int ptrace_handler::ring_buffer_callback(void *ctx, void *data, size_t data_sz)
     ptrace_handler *handler = static_cast<ptrace_handler *>(ctx);
     ptrace_event e;
     memmove(&e, data, data_sz);
-    handler->onEvent(e);
+    handler->on_event(e);
 
     return 0;
 }
@@ -61,8 +61,8 @@ int ptrace_handler::LoadAndAttachAll(pid_t protected_pid) {
   return 0;
 }
 
-ptrace_handler::ptrace_handler(std::function<void(ptrace_event)> onEvent) {
-    this->onEvent = onEvent;
+ptrace_handler::ptrace_handler(std::function<void(ptrace_event)> on_event) {
+    this->on_event = on_event;
 }
 
 void ptrace_handler::DetachAndUnloadAll() {
