@@ -2,15 +2,16 @@
 #include <bpf/libbpf.h>
 #include <iostream>
 #include "../shared.h"
-#include "string.h"
-#include <utility>
 
-int handle_event(void *ctx, void *data, size_t data_sz) {
-    (void)data_sz; // mark as unused
 
-    auto* optional_data_p = static_cast<std::optional<struct ptrace_event>*>(ctx);
-    *optional_data_p = *static_cast<struct ptrace_event*>(data);
-    
+
+int ptrace_handler::ring_buffer_callback(void *ctx, void *data, size_t data_sz)
+{
+    ptrace_handler *handler = static_cast<ptrace_handler *>(ctx);
+    ptrace_event e;
+    memmove(&e, data, data_sz);
+    handler->onEvent(e);
+
     return 0;
 }
 
@@ -38,8 +39,8 @@ int ptrace_handler::LoadAndAttachAll(pid_t protected_pid)
 
     auto buf = ring_buffer__new(
         bpf_map__fd(skel_obj.get()->maps.rb),
-        handle_event,
-        &this->data,
+        ptrace_handler::ring_buffer_callback,
+        this,
         nullptr);
     rb.reset(buf);
 
@@ -70,9 +71,9 @@ void ptrace_handler::DetachAndUnloadAll()
     std::cout << "ptrace eBPF program detached and unloaded." << std::endl;
 }
 
-const std::optional<ptrace_event> ptrace_handler::GetData()
-{
-    return std::exchange(data, std::nullopt);
+
+ptrace_handler::ptrace_handler(std::function<void(ptrace_event)> onEvent) {
+    this->onEvent = onEvent;
 }
 
 ptrace_handler::~ptrace_handler() { DetachAndUnloadAll(); }

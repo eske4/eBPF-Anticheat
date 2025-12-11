@@ -6,7 +6,7 @@
 int main() {
   std::cout << "--- Anti-Cheat Handler Test ---" << std::endl;
 
-  pid_t protected_pid = 806;
+  pid_t protected_pid = 792;
 
   module_handler handler;
   ptrace_agent ptrace_agent(protected_pid);
@@ -30,8 +30,6 @@ int main() {
 
   std::string temp;
   std::getline(std::cin, temp);
-
-  ptrace_agent.print_ptrace();
 
   return 0;
 }

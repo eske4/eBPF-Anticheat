@@ -1,21 +1,21 @@
 #include "ptrace_agent.h"
-#include <iostream>
+#include <cstdio>
 
-void ptrace_agent::print_ptrace() {
-    auto data = this->handler.GetData();
-    if (!data.has_value()) return;
-    
-    std::cout << "ptrace called by " << data.value().caller_name
-            << " (pid " << data.value().caller
-            << "), attaching to proc " << data.value().target
-            << std::endl;
-}
+constexpr auto func = [](ptrace_event e)
+{ 
+    printf("ptrace called by %s (PID %i), attaching to proc %i\n",
+        e.caller_name,
+        e.caller,
+        e.target);
+};
 
 ptrace_agent::ptrace_agent(pid_t protected_pid)
+    : handler(func)
 {
-    this->handler.LoadAndAttachAll(protected_pid);
+    handler.LoadAndAttachAll(protected_pid);
 }
 
 ptrace_agent::~ptrace_agent()
 {
 }
+
