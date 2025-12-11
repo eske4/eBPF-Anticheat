@@ -22,6 +22,7 @@ foreach(src ${EBPF_PROGRAMS})
 
   add_custom_command(
     OUTPUT ${OUT}
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${src}
     COMMAND
       ${CLANG_EXECUTABLE} "-target" "bpf" "-O2" "-g"
       "-D__TARGET_ARCH_${BPF_ARCH}" "-I${BPF_OUT}" "${DATATYPES_INCLUDE_FLAGS}"
