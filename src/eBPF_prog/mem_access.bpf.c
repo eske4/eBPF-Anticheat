@@ -71,13 +71,13 @@ int handle_process_vm_rw(pid_t pid, bool is_write)
 SEC("tp/syscalls/sys_enter_process_vm_readv")
 int trace_readv(struct trace_event_raw_sys_enter *ctx)
 {
-    pid_t pid = (pid_t)ctx->args[0]; 
+    pid_t pid = (pid_t)BPF_CORE_READ(ctx, args[0]); 
     return handle_process_vm_rw(pid, false);
 }
 
 SEC("tp/syscalls/sys_enter_process_vm_writev")
 int trace_writev(struct trace_event_raw_sys_enter *ctx)
 {
-    pid_t pid = (pid_t)ctx->args[0]; 
+    pid_t pid = (pid_t)BPF_CORE_READ(ctx, args[0]); 
     return handle_process_vm_rw(pid, true);
 }
