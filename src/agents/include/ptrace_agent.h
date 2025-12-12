@@ -4,10 +4,9 @@
 class ptrace_agent
 {
 private:
-    struct ptrace_handler handler;
+    ptrace_handler handler;
 public:
-    ptrace_agent(/* args */);
+    ptrace_agent(pid_t protected_pid);
     ~ptrace_agent();
-    void print_ptrace();
 };
 

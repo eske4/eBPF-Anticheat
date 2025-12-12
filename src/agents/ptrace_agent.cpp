@@ -1,20 +1,21 @@
 #include "ptrace_agent.h"
-#include <iostream>
+#include <cstdio>
 
-void ptrace_agent::print_ptrace() {
-    auto data = this->handler.GetData();
-    std::cout << "ptrace called by " << data.caller_name
-            << " (pid " << data.caller
-            << "), attaching to proc " << data.target
-            << std::endl;
-}
+constexpr auto on_event = [](ptrace_event e)
+{ 
+    printf("ptrace called by %s (PID %i), attaching to proc %i\n",
+        e.caller_name,
+        e.caller,
+        e.target);
+};
 
-ptrace_agent::ptrace_agent(/* args */)
+ptrace_agent::ptrace_agent(pid_t protected_pid)
+    : handler(on_event)
 {
-    std::cout << "agent constructor" << std::endl;
-    this->handler.LoadAndAttachAll(808);
+    handler.LoadAndAttachAll(protected_pid);
 }
 
 ptrace_agent::~ptrace_agent()
 {
 }
+
