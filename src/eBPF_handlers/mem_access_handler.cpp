@@ -66,6 +66,15 @@ int mem_access_handler::LoadAndAttachAll(pid_t protected_pid) {
     return err;
   }
 
+  // copy the protected_pid as a string to ebpf map
+  std::string protected_pid_s = std::to_string(protected_pid);
+  char data[16] = {};
+  size_t copy_len = std::min(protected_pid_s.length() + 1, sizeof(data));
+  std::memcpy(data, protected_pid_s.c_str(), copy_len);
+  int key = 0;
+  bpf_map__update_elem(skel_obj.get()->maps.protected_pid_s_map, &key, sizeof(int), data, sizeof(data), 0);
+  
+
   loop_thread = std::jthread([this](std::stop_token st) {
     while (!st.stop_requested()) {
       int ret = ring_buffer__poll(rb.get(), 100);
