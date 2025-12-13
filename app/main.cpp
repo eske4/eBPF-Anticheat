@@ -1,6 +1,5 @@
 #include "module_handler.h"
-#include "ptrace_handler.h"
-#include "ptrace_agent.h"
+#include "mem_access_agent.h"
 #include <iostream>
 
 int main() {
@@ -9,7 +8,7 @@ int main() {
   pid_t protected_pid = 792;
 
   module_handler handler;
-  ptrace_agent ptrace_agent(protected_pid);
+  mem_access_agent mem_access_agent(protected_pid);
 
   // 1. Load and Attach
   if (handler.LoadAndAttachAll() != 0) {

@@ -1,4 +1,4 @@
-set(eBPF_HANDLER_SOURCES module_handler.cpp ptrace_handler.cpp)
+set(eBPF_HANDLER_SOURCES module_handler.cpp mem_access_handler.cpp)
 
 add_library(eBPF_Handlers ${eBPF_HANDLER_SOURCES})
 

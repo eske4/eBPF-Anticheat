@@ -1,4 +1,4 @@
-set(AGENTS_SOURCES ptrace_agent.cpp)
+set(AGENTS_SOURCES mem_access_agent.cpp)
 
 add_library(Agents ${AGENTS_SOURCES})
 

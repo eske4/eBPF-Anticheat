@@ -4,7 +4,7 @@ set(SKEL_OUT_DIR ${CMAKE_BINARY_DIR}/skeletons)
 
 # Headers and programs to generate/compile
 set(VMLINUX_H ${BPF_OUT}/vmlinux.h)
-set(EBPF_PROGRAMS module_tracker.bpf.c ptrace.bpf.c) # Add eBPF programs here
+set(EBPF_PROGRAMS module_tracker.bpf.c mem_access.bpf.c) # Add eBPF programs here
 
 get_target_property(DATATYPES_INCLUDES DataTypes INTERFACE_INCLUDE_DIRECTORIES)
 
