@@ -3,8 +3,11 @@
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_helpers.h>
 #include <bpf/bpf_tracing.h>
+#include <errno.h>
 
 char LICENSE[] SEC("license") = "Dual BSD/GPL";
+
+#define PID_S_MAX_LEN 16
 
 volatile const pid_t PROTECTED_PID = 0;
 
@@ -12,7 +15,7 @@ struct
 {
   __uint(type, BPF_MAP_TYPE_ARRAY);
   __uint(key_size, 1 * sizeof(int));
-  __uint(value_size, 16 * sizeof(char));
+  __uint(value_size, PID_S_MAX_LEN * sizeof(char));
   __uint(max_entries, 1);
 } protected_pid_s_map SEC(".maps");
 
@@ -72,6 +75,9 @@ int handle_process_vm_rw(pid_t pid, bool is_write)
   return 0;
 }
 
+
+
+
 SEC("tp/syscalls/sys_enter_process_vm_readv")
 int trace_readv(struct trace_event_raw_sys_enter *ctx)
 {
@@ -86,8 +92,6 @@ int trace_writev(struct trace_event_raw_sys_enter *ctx)
   return handle_process_vm_rw(pid, true);
 }
 
-
-
 SEC("lsm/file_open")
 int BPF_PROG(check_proc_access, struct file *file)
 {
@@ -101,62 +105,72 @@ int BPF_PROG(check_proc_access, struct file *file)
     return 0;
   }
 
-  if (bpf_path_d_path(&file->f_path, e->filename, sizeof(e->filename)) < 0) // should return resolved (full) path ??
+  // get full resolved path
+  if (bpf_path_d_path(&file->f_path, e->filename, sizeof(e->filename)) < 0)
   {
-    goto cleanup;
+    goto allow_access;
   }
 
-  if (e->filename[0] != '/' || e->filename[1] != 'p' ||
-      e->filename[2] != 'r' || e->filename[3] != 'o' ||
-      e->filename[4] != 'c' || e->filename[5] != '/')
-  {
-    goto cleanup;
-  }
+  char *filename_ptr = e->filename;
 
-  char *ptr = &e->filename[6];
+  if (bpf_strncmp(filename_ptr, 6, "/proc/"))
+  {
+    goto allow_access; // not in /proc/
+  }
+  filename_ptr += 6;
+
   char *ptr_protected;
+  char protected_pid_s[PID_S_MAX_LEN] = {0};
 
   int key = 0;
   ptr_protected = bpf_map_lookup_elem(&protected_pid_s_map, &key);
   if (!ptr_protected)
   {
-    goto cleanup;
+    goto allow_access;
   }
-
-  int i = 0;
-  if (ptr[i] <= '0' || ptr[i] >= '9')
+  if (bpf_probe_read_kernel(protected_pid_s, PID_S_MAX_LEN, ptr_protected) < 0)
   {
-    goto cleanup; // not a pid
+    goto allow_access;
   }
 
-  while (ptr[i] >= '0' && ptr[i] <= '9' && ptr_protected[i] >= '0' && ptr_protected[i] <= '9' && i < 15)
+  // This next section is stupid but bpf_strncmp can only be used
+  // with a read-only string as 3rd parameter.
+  // Therefore I temporarily insert a '\0' while using bpf_strcmp to
+  // get the same functionality as bpf_strncmp
+
+  int len = bpf_strnlen(protected_pid_s, PID_S_MAX_LEN);
+  if (len <= 0 || len > PID_S_MAX_LEN)
   {
-    if (ptr[i] != ptr_protected[i])
-    {
-      goto cleanup; // no match
-    }
-    i++;
+    goto allow_access; // should never happen, but we need to check because ebpf verifier
   }
+  char temp = filename_ptr[len];
+  filename_ptr[len] = '\0';
 
-  if (ptr_protected[i] != '\0' || (ptr[i] >= '0' && ptr[i] <= '9'))
+  if (bpf_strcmp(protected_pid_s, filename_ptr))
   {
-    goto cleanup; // only partial match
+    goto allow_access; // no pid match
+  }
+  filename_ptr[len] = temp;
+  filename_ptr += len;
+
+  // at this point, we know that the file is somewhere in the dir /proc/pid
+  // we should only block access to "/mem" and "/maps" and "/smaps" (maybe more, idk yet)
+  if (!bpf_strncmp(filename_ptr, 4, "/mem") ||
+      !bpf_strncmp(filename_ptr, 5, "/maps") ||
+      !bpf_strncmp(filename_ptr, 6, "/smaps"))
+  {
+    e->caller = current_pid;
+    bpf_get_current_comm(e->caller_name, sizeof(e->caller_name));
+    e->type = OPEN;
+    e->target = PROTECTED_PID;
+
+    bpf_printk("procfs file opened: %s by %s\n", e->filename, e->caller_name);
+    bpf_ringbuf_submit(e, 0);
+    return -EPERM;
   }
 
-  // TODO:
-  // Needs more filtering to always allow access to for example proc/pid/status
-  // We should only block access to "mem" and "maps" (maybe more, idk yet) 
-
-  e->caller = current_pid;
-  bpf_get_current_comm(e->caller_name, sizeof(e->caller_name));
-  e->type = OPEN;
-  e->target = PROTECTED_PID;
-
-  bpf_printk("procfs file opened: %s by %s\n", e->filename, e->caller_name);
-  bpf_ringbuf_submit(e, 0);
-  return 0; // return 1 to deny access when filtering is done
-
-cleanup:
+allow_access:
   bpf_ringbuf_discard(e, 0);
   return 0;
 }
+argument
