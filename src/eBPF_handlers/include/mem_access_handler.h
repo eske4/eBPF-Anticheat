@@ -1,6 +1,6 @@
 #pragma once
-#include "data_types.h"
 #include "mem_access.skel.h"
+#include "mem_data.h"
 #include <functional>
 #include <thread>
 

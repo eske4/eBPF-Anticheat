@@ -1,5 +1,4 @@
 #include "module_tracker_agent.h"
-#include "data_types.h"
 #include <iostream>
 
 module_tracker_agent::module_tracker_agent()

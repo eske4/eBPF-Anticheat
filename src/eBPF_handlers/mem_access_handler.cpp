@@ -1,5 +1,4 @@
 #include "mem_access_handler.h"
-#include "data_types.h"
 #include "string.h"
 #include <bpf/libbpf.h>
 #include <cerrno>

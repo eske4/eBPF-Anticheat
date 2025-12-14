@@ -1,5 +1,4 @@
-#include "module_handler.h"
-#include "data_types.h"
+#include "module_tracker_handler.h"
 #include "string.h"
 #include <bpf/libbpf.h>
 #include <cerrno>
@@ -7,14 +6,14 @@
 #include <iostream>
 #include <thread>
 
-int module_handler::ring_buffer_callback(void *ctx, void *data,
-                                         size_t data_sz) {
+int module_tracker_handler::ring_buffer_callback(void *ctx, void *data,
+                                                 size_t data_sz) {
   if (data_sz != sizeof(module_event)) {
     std::cerr << "Size mitch match in event";
     return 1; // Return non-zero to indicate a processing error
   }
 
-  auto *handler = static_cast<module_handler *>(ctx);
+  auto *handler = static_cast<module_tracker_handler *>(ctx);
 
   module_event e;
   std::memcpy(&e, data, sizeof(e));
@@ -23,7 +22,7 @@ int module_handler::ring_buffer_callback(void *ctx, void *data,
   return 0;
 }
 
-int module_handler::LoadAndAttachAll() {
+int module_tracker_handler::LoadAndAttachAll() {
   if (!on_event) {
     std::cerr << "No on_event callback set\n";
     return -1;
@@ -46,7 +45,7 @@ int module_handler::LoadAndAttachAll() {
   }
 
   rb.reset(ring_buffer__new(bpf_map__fd(skel_obj->maps.rb),
-                            module_handler::ring_buffer_callback, this,
+                            module_tracker_handler::ring_buffer_callback, this,
                             nullptr));
 
   if (!rb) {
@@ -82,10 +81,11 @@ int module_handler::LoadAndAttachAll() {
   return 0;
 }
 
-module_handler::module_handler(std::function<void(module_event)> cb)
+module_tracker_handler::module_tracker_handler(
+    std::function<void(module_event)> cb)
     : on_event(std::move(cb)) {}
 
-void module_handler::DetachAndUnloadAll() {
+void module_tracker_handler::DetachAndUnloadAll() {
 
   if (loop_thread.joinable()) {
     loop_thread.request_stop();
@@ -99,4 +99,4 @@ void module_handler::DetachAndUnloadAll() {
   std::cout << "module_tracker eBPF program detached and unloaded.\n";
 }
 
-module_handler::~module_handler() { DetachAndUnloadAll(); }
+module_tracker_handler::~module_tracker_handler() { DetachAndUnloadAll(); }

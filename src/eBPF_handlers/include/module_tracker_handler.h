@@ -1,16 +1,16 @@
 #pragma once
-#include "data_types.h"
+#include "module_data.h"
 #include "module_tracker.skel.h"
 #include <functional>
 #include <memory>
 #include <thread>
 
-class module_handler {
+class module_tracker_handler {
 public:
   /// @param on_event A function that runs when new data arrives from eBPF
   /// programs
-  explicit module_handler(std::function<void(module_event)> on_event);
-  ~module_handler();
+  explicit module_tracker_handler(std::function<void(module_event)> on_event);
+  ~module_tracker_handler();
 
   /// @param protected_pid The pid of the game/process to protect
   int LoadAndAttachAll();

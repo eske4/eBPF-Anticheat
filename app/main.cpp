@@ -1,6 +1,6 @@
 #include "mem_access_agent.h"
-#include "module_handler.h"
 #include "module_tracker_agent.h"
+#include "module_tracker_handler.h"
 #include <iostream>
 
 int main() {
