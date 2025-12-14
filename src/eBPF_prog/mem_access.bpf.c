@@ -173,4 +173,3 @@ allow_access:
   bpf_ringbuf_discard(e, 0);
   return 0;
 }
-argument
