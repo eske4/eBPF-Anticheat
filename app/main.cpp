@@ -24,8 +24,7 @@ int main() {
     auto maybe_event = module_agent.get_next_event();
     while (maybe_event) {
       const module_event &e = *maybe_event;
-      std::cout << "Module event: name=" << e.name << " pid=" << e.pid
-                << " timestamp=" << e.timestamp_ns << std::endl;
+      module_agent.printEventData(e);
 
       // Get the next event in the queue
       maybe_event = module_agent.get_next_event();
