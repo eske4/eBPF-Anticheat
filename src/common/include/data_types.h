@@ -1,10 +1,11 @@
 #pragma once
 
+#include <cstdint>
 #define MY_TASK_COMM_LEN 16
 #define FILENAME_LEN 4096
 #define KMOD_NAME_LEN 64
 
-enum module_event_state { LOADED = 1, UNLOADED = 2 };
+enum module_event_state : uint32_t { LOADED = 1, UNLOADED = 2 };
 enum mem_event_type {
   PTRACE = 0,
   OPEN = 1,
@@ -23,9 +24,9 @@ struct mem_event {
 };
 
 struct module_event {
-  char name[KMOD_NAME_LEN];      // module name
-  unsigned int taints;           // kernel taints
-  enum module_event_state state; // module state
-  int pid;                       // PID that loaded the module
-  int timestamp_ns;              // event timestamp
+  char name[64];            // 64 bytes
+  uint32_t taints;          // 4 bytes
+  module_event_state state; // 4 bytes
+  int32_t pid;              // 4 bytes
+  uint64_t timestamp_ns;    // 8 bytes
 };

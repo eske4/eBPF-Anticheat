@@ -19,6 +19,22 @@ int main() {
   std::cout << "Press ENTER to continue and unload the programs..."
             << std::endl;
 
+  while (true) {
+    // Try to get the next event
+    auto maybe_event = module_agent.get_next_event();
+    while (maybe_event) {
+      const module_event &e = *maybe_event;
+      std::cout << "Module event: name=" << e.name << " pid=" << e.pid
+                << " timestamp=" << e.timestamp_ns << std::endl;
+
+      // Get the next event in the queue
+      maybe_event = module_agent.get_next_event();
+    }
+
+    // Sleep briefly to avoid busy-waiting
+    std::this_thread::sleep_for(std::chrono::milliseconds(10));
+  }
+
   std::string temp;
   std::getline(std::cin, temp);
 

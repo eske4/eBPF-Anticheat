@@ -9,7 +9,7 @@
 
 int module_handler::ring_buffer_callback(void *ctx, void *data,
                                          size_t data_sz) {
-  if (data_sz != sizeof(mem_event)) {
+  if (data_sz != sizeof(module_event)) {
     std::cerr << "Size mitch match in event";
     return 1; // Return non-zero to indicate a processing error
   }
