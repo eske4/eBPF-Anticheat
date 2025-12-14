@@ -2,7 +2,7 @@
 #include <iostream>
 
 module_tracker_agent::module_tracker_agent()
-    : handler([this](module_event e) { on_event_cb(e); }) {
+    : handler([this](const module_event &e) { on_event_cb(e); }) {
   handler.LoadAndAttachAll();
 }
 
@@ -17,7 +17,7 @@ std::optional<module_event> module_tracker_agent::get_next_event() {
   return e;
 }
 
-void module_tracker_agent::on_event_cb(module_event &e) {
+void module_tracker_agent::on_event_cb(const module_event &e) {
   std::lock_guard<std::mutex> lock(queue_mutex);
   event_queue.push(e);
 }
