@@ -111,7 +111,7 @@ int BPF_PROG(check_proc_access, struct file *file)
   if (current_pid == PROTECTED_PID)
     return 0;
 
-  char buf[64];
+  char buf[MY_FILENAME_LEN];
 
   // get full resolved path
   if (bpf_path_d_path(&file->f_path, buf, sizeof(buf)) < 0)
