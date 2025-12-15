@@ -1,4 +1,4 @@
-#include "mem_access_handler.h"
+#include "module_tracker_handler.h"
 #include "string.h"
 #include <bpf/libbpf.h>
 #include <cerrno>
@@ -6,23 +6,23 @@
 #include <iostream>
 #include <thread>
 
-int mem_access_handler::ring_buffer_callback(void *ctx, void *data,
-                                             size_t data_sz) {
-  if (data_sz != sizeof(mem_event)) {
+int module_tracker_handler::ring_buffer_callback(void *ctx, void *data,
+                                                 size_t data_sz) {
+  if (data_sz != sizeof(module_event)) {
     std::cerr << "Size mitch match in event";
     return 1; // Return non-zero to indicate a processing error
   }
 
-  auto *handler = static_cast<mem_access_handler *>(ctx);
+  auto *handler = static_cast<module_tracker_handler *>(ctx);
 
-  mem_event e;
+  module_event e;
   std::memcpy(&e, data, sizeof(e));
   handler->on_event(e);
 
   return 0;
 }
 
-int mem_access_handler::LoadAndAttachAll(pid_t protected_pid) {
+int module_tracker_handler::LoadAndAttachAll() {
   if (!on_event) {
     std::cerr << "No on_event callback set\n";
     return -1;
@@ -30,15 +30,13 @@ int mem_access_handler::LoadAndAttachAll(pid_t protected_pid) {
 
   int err = 0;
 
-  skel_obj.reset(mem_access__open());
+  skel_obj.reset(module_tracker__open());
   if (!skel_obj) {
     std::cerr << "ERROR: Failed to open BPF skeleton object." << std::endl;
     return -1;
   }
 
-  skel_obj.get()->rodata->PROTECTED_PID = protected_pid;
-
-  err = mem_access__load(skel_obj.get());
+  err = module_tracker__load(skel_obj.get());
   if (err) {
     std::cerr << "ERROR: Failed to load BPF programs into kernel: " << err
               << std::endl;
@@ -47,7 +45,7 @@ int mem_access_handler::LoadAndAttachAll(pid_t protected_pid) {
   }
 
   rb.reset(ring_buffer__new(bpf_map__fd(skel_obj->maps.rb),
-                            mem_access_handler::ring_buffer_callback, this,
+                            module_tracker_handler::ring_buffer_callback, this,
                             nullptr));
 
   if (!rb) {
@@ -56,7 +54,7 @@ int mem_access_handler::LoadAndAttachAll(pid_t protected_pid) {
     return -1;
   }
 
-  err = mem_access__attach(skel_obj.get());
+  err = module_tracker__attach(skel_obj.get());
   if (err) {
     std::cerr << "ERROR: Failed to attach BPF programs to hook points: " << err
               << std::endl;
@@ -83,10 +81,11 @@ int mem_access_handler::LoadAndAttachAll(pid_t protected_pid) {
   return 0;
 }
 
-mem_access_handler::mem_access_handler(std::function<void(mem_event)> cb)
+module_tracker_handler::module_tracker_handler(
+    std::function<void(module_event)> cb)
     : on_event(std::move(cb)) {}
 
-void mem_access_handler::DetachAndUnloadAll() {
+void module_tracker_handler::DetachAndUnloadAll() {
 
   if (loop_thread.joinable()) {
     loop_thread.request_stop();
@@ -97,7 +96,7 @@ void mem_access_handler::DetachAndUnloadAll() {
   rb.reset();
   skel_obj.reset();
 
-  std::cout << "mem_access eBPF program detached and unloaded.\n";
+  std::cout << "module_tracker eBPF program detached and unloaded.\n";
 }
 
-mem_access_handler::~mem_access_handler() { DetachAndUnloadAll(); }
+module_tracker_handler::~module_tracker_handler() { DetachAndUnloadAll(); }

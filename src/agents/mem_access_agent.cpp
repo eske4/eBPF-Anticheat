@@ -1,6 +1,4 @@
 #include "mem_access_agent.h"
-#include "data_types.h"
-#include "include/mem_access_agent.h"
 #include <iostream>
 
 const char *event_type_to_string(mem_event_type type) {
