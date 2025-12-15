@@ -29,6 +29,14 @@ struct mem_event {
   char filename[MY_FILENAME_LEN];
 };
 
+struct
+{
+  __uint(type, BPF_MAP_TYPE_ARRAY);
+  __uint(key_size, 1 * sizeof(int));
+  __uint(value_size, PID_S_MAX_LEN * sizeof(char));
+  __uint(max_entries, 1);
+} protected_pid_s_map SEC(".maps");
+
 struct {
   __uint(type, BPF_MAP_TYPE_RINGBUF);
   __uint(max_entries, 256 * sizeof(struct mem_event));
