@@ -1,4 +1,3 @@
-#include "data_types.h"
 #include "vmlinux.h"
 #include <bpf/bpf_core_read.h>
 #include <bpf/bpf_helpers.h>
@@ -7,27 +6,36 @@
 
 char LICENSE[] SEC("license") = "Dual BSD/GPL";
 
+#define MY_TASK_COMM_LEN 16
+#define MY_FILENAME_LEN 64
 #define PID_S_MAX_LEN 16
 
 volatile const pid_t PROTECTED_PID = 0;
 
-struct
-{
-  __uint(type, BPF_MAP_TYPE_ARRAY);
-  __uint(key_size, 1 * sizeof(int));
-  __uint(value_size, PID_S_MAX_LEN * sizeof(char));
-  __uint(max_entries, 1);
-} protected_pid_s_map SEC(".maps");
+enum mem_event_type {
+  PTRACE = 0,
+  OPEN = 1,
+  WRITE = 2,
+  READ = 3,
+  VM_WRITE = 4,
+  VM_READ = 5,
+};
 
-struct
-{
+struct mem_event {
+  enum mem_event_type type;
+  int caller;
+  int target;
+  char caller_name[MY_TASK_COMM_LEN];
+  char filename[MY_FILENAME_LEN];
+};
+
+struct {
   __uint(type, BPF_MAP_TYPE_RINGBUF);
   __uint(max_entries, 256 * sizeof(struct mem_event));
 } rb SEC(".maps");
 
 SEC("tp/syscalls/sys_enter_ptrace")
-int ptrace_entry(struct trace_event_raw_sys_enter *ctx)
-{
+int ptrace_entry(struct trace_event_raw_sys_enter *ctx) {
   pid_t caller = (pid_t)(bpf_get_current_pid_tgid() >> 32);
   pid_t target;
   bpf_core_read(&target, sizeof(target), &ctx->args[1]);
@@ -35,8 +43,7 @@ int ptrace_entry(struct trace_event_raw_sys_enter *ctx)
   if (target != PROTECTED_PID || caller == PROTECTED_PID)
     return 0;
 
-  struct mem_event *e =
-      bpf_ringbuf_reserve(&rb, sizeof(struct mem_event), 0);
+  struct mem_event *e = bpf_ringbuf_reserve(&rb, sizeof(struct mem_event), 0);
   if (!e)
     return 0;
 
