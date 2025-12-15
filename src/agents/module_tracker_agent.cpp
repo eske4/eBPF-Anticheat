@@ -1,5 +1,6 @@
 #include "module_tracker_agent.h"
 #include <iostream>
+#include <string_view>
 
 module_tracker_agent::module_tracker_agent()
     : handler([this](const module_event &e) { on_event_cb(e); }) {
@@ -24,7 +25,8 @@ void module_tracker_agent::on_event_cb(const module_event &e) {
 
 void module_tracker_agent::printEventData(const module_event &e) {
   // Convert state enum to string
-  const char *state_str = "";
+  std::string_view state_str = "";
+
   switch (e.state) {
   case LOADED:
     state_str = "LOADED";
