@@ -37,10 +37,11 @@ int mem_access_agent::get_pid_id() { return protected_pid; }
 void mem_access_agent::printEventData(const mem_event &e) {
 
   std::cout << "===== Memory Event =====\n";
-  std::cout << "Caller name       : " << e.caller_name << "\n";
-  std::cout << "PID        : " << e.caller << "\n";
-  std::cout << "Filename      : " << e.filename << "\n";
-  std::cout << "Target     : " << e.target;
+  std::cout << "Caller name     : " << e.caller_name << "\n";
+  std::cout << "PID             : " << e.caller << "\n";
+  std::cout << "Filename        : " << e.filename << "\n";
+  std::cout << "Target          : " << e.target << "\n";
+  std::cout << "Event type      : " << event_type_to_string(e.type) << "\n";
   std::cout << "=======================\n";
 }
 
