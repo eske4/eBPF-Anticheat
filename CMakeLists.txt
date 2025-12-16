@@ -5,7 +5,7 @@ set(CMAKE_CXX_COMPILER clang++)
 
 # Enforce Linux
 project(
-  AeBPF
+  eBPFA
   VERSION 1.0.0
   LANGUAGES C CXX
   DESCRIPTION "An anticheat focused on eBPF")
