@@ -37,4 +37,7 @@ compile_commands.json
 .cache
 CPM_modules/
 
+# test .csv file
+event_data.csv
+
 

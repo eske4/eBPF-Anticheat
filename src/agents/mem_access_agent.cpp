@@ -2,6 +2,11 @@
 #include "mem_data.h"
 #include <iostream>
 
+#include <fstream>
+#include <sstream>
+
+
+
 std::string_view event_type_to_string(mem_event_type type);
 
 // test::block_access 
@@ -49,6 +54,23 @@ void mem_access_agent::printEventData(const mem_event &e) {
   std::cout << "Target          : " << e.target << "\n";
   std::cout << "Event type      : " << event_type_to_string(e.type) << "\n";
   std::cout << "=======================\n";
+}
+
+void mem_access_agent::writeEventDataToCSV(const mem_event &e) {
+  std::ofstream csv_file("event_data.csv", std::ios::app);
+  if (!csv_file.is_open()) return;
+
+  if (csv_file.tellp() == 0) {
+    csv_file << "Caller Name,PID,Filename,Target,Event Type\n";
+  }
+
+  csv_file << e.caller_name << ","
+           << e.caller << ","
+           << e.filename << ","
+           << e.target << ","
+           << event_type_to_string(e.type) << "\n";
+
+  csv_file.close();
 }
 
 std::string_view event_type_to_string(mem_event_type type) {

@@ -20,6 +20,6 @@ debug:
 
 
 test: 
-	@sudo $(BUILD_DIR)/app/eBPFA $$(pidof linux_64_client)
+	@sudo $(BUILD_DIR)/app/eBPFA $$(pidof linux_64_client native_client) $$TEST_SET
 
 

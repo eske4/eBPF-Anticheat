@@ -21,7 +21,18 @@ int main(int argc, char *argv[]) {
   kmod_tracker_agent module_agent = kmod_tracker_agent();
 
 
-  mem_agent.set_block_access(false); //Set to true to make eBPF block access
+  mem_agent.set_block_access(true); //Set to true to make eBPF block access
+  int mem_event_hooks[6] = {1, 1, 1, 1, 1, 1}; // default print all event 
+
+  if (argc > 8) {
+    mem_agent.set_block_access(std::stoi(argv[2]) == 1); 
+    mem_event_hooks[0] = std::stoi(argv[3]); // PTRACE
+    mem_event_hooks[1] = std::stoi(argv[4]); // OPEN
+    mem_event_hooks[2] = std::stoi(argv[5]); // WRITE
+    mem_event_hooks[3] = std::stoi(argv[6]); // READ
+    mem_event_hooks[4] = std::stoi(argv[7]); // VM_WRITE
+    mem_event_hooks[5] = std::stoi(argv[8]); // VM_READ
+  }
 
   // 1. Load and Attach
   std::cout << "\n========================================================"<< std::endl;
@@ -44,9 +55,10 @@ int main(int argc, char *argv[]) {
 
     while (maybe_mem_agent) {
       const mem_event &e2 = *maybe_mem_agent;
-      if (e2.type == WRITE || e2.type == READ || e2.type == VM_WRITE || e2.type == VM_READ || e2.type == OPEN || e2.type == PTRACE ) {
+      if (e2.type < 6 && mem_event_hooks[e2.type] == 1) {
         mem_agent.printEventData(e2);
       }
+      //mem_agent.writeEventDataToCSV(e2);
       maybe_mem_agent = mem_agent.get_next_event();
     }
 

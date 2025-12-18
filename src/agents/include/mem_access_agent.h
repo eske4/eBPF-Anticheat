@@ -27,6 +27,7 @@ public:
   int get_pid_id();
   std::optional<mem_event> get_next_event();
   void printEventData(const mem_event &e);
+  void writeEventDataToCSV(const mem_event &e);
 
   void set_block_access(bool block);
 };

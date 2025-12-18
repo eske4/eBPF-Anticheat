@@ -79,7 +79,12 @@ testing of eBPF program is done, using the open source game *AssaultCube*, and t
 1. start *AssaultCube*
 2. run `make build`if not done yet
 3. run `make test` -- if attackcube is running the eBPF program will attach its pid, else default pid 792
+    - can also also diable eBPF blocking access and what events it print in terminal by using parameter `TEST_SET="1 1 1 1 1 1 1 1" make test`. The first variable is if block or not (1=block) and the rest are what event to print using, in same order as defined in *src/common/include/data_types.h* (1=print)
+    - can also enable logging of event to .csv file -- have to be uncomment from main.cpp
 
+> [!NOTE]  
+> - in makefile test runs `@sudo $(BUILD_DIR)/app/eBPFA $$(pidof linux_64_client native_client)
+> - This could lead to error if there is another excutable then assaultcube whit this name 
 
 ## Cheat methods
 ### Debugging utility *Scanmem*
@@ -88,8 +93,8 @@ instalation using yay: `yay -S scanmem`
 
 **process** of memory manipulation using scanmem:
 1. start *AssaultCube* 
-2. run `ps -aux | grep assaultcube_v1.2` to find process id (pid) of game
-3. In new terminal run `sudo scanmem` 
+2. run `ps -aux | grep assaultcube_v1.2` to find process id (pid) of game or other method `pidof`, `pgrep` etc.
+3. In new terminal run `scanmem` 
 4. in scanmem use command `pid <game pid>`   
 5. enter `<value>` you want to track e.g. ammo count 
 6. in game change that value e.g. shoot the ammo 
