@@ -1,6 +1,6 @@
-# eBPFA — eBPF Anti-Cheat
+# TyrSecure — eBPF Anti-Cheat
 
-**eBPFA** is a prototype anti-cheat system built using **eBPF**, designed to demonstrate kernel-level monitoring and enforcement capabilities.
+**TyrSecure** is a prototype anti-cheat system built using **eBPF**, designed to demonstrate kernel-level monitoring and enforcement capabilities.
 
 This project was developed as part of a **Computer Science Master’s Specialization Project** (9th semester, first half of specialization).
 
