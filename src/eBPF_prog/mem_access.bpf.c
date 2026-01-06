@@ -10,7 +10,8 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 #define MY_FILENAME_LEN 64
 #define PROC_SUPER_MAGIC 0x9fa0
 
-volatile const pid_t PROTECTED_PID = 0;
+
+const pid_t PROTECTED_PID;
 
 enum mem_event_type {
   PTRACE = 0,
@@ -142,5 +143,35 @@ int BPF_PROG(restrict_proc_access, struct file *file)
     return 0;
   }
   
+  return 0;
+}
+
+SEC("kprobe/find_vpid")
+int BPF_KPROBE(kprobe_find_vpid, int nr)
+{
+  pid_t looked_up_pid = (pid_t)nr;
+
+  if (looked_up_pid != PROTECTED_PID) {
+    return 0;
+  }
+
+  char name[MY_TASK_COMM_LEN];
+  bpf_get_current_comm(name, sizeof(name));
+  bpf_printk("vpid lookup by %s, arg: %i", name, nr);
+  return 0;
+}
+
+SEC("kretprobe/pid_task")
+int BPF_KRETPROBE(kprobe_pid_task_exit, struct task_struct *return_val)
+{
+  pid_t looked_up_pid = BPF_CORE_READ(return_val, pid);
+  
+  if (looked_up_pid != PROTECTED_PID) {
+    return 0;
+  }
+  
+  char name[MY_TASK_COMM_LEN];
+  bpf_get_current_comm(name, sizeof(name));
+  bpf_printk("task lookup by %s, arg: %i", name, looked_up_pid);
   return 0;
 }
