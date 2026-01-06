@@ -70,14 +70,3 @@ int getModuleInfo(struct trace_event_raw_module_load *ctx,
   bpf_ringbuf_submit(e, 0);
   return 0;
 }
-
-SEC("lsm/kernel_read_file")
-int BPF_PROG(block_all_modules, struct file *file, enum kernel_read_file_id id, bool contents)
-{
-    // READING_MODULE is the ID for kernel modules
-    if (id == READING_MODULE) {
-        bpf_printk("Blocking module load via kernel_read_file");
-        return -EPERM; 
-    }
-    return 0;
-}
