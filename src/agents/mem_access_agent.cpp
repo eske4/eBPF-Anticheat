@@ -55,6 +55,12 @@ std::string_view event_type_to_string(mem_event_type type) {
     return "VM_WRITE";
   case VM_READ:
     return "VM_READ";
+  case PROCFS:
+    return "PROCFS";
+  case K_TASK_LOOKUP:
+    return "KERNEL_TASK_LOOKUP";
+  case K_VPID_LOOKUP:
+    return "KERNEL_VPID_LOOKUP";
   default:
     return "UNKNOWN_EVENT";
   }

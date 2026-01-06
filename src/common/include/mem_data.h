@@ -11,7 +11,10 @@ enum mem_event_type : uint32_t {
   WRITE = 2,
   READ = 3,
   VM_WRITE = 4,
-  VM_READ = 5
+  VM_READ = 5,
+  PROCFS = 6,
+  K_TASK_LOOKUP = 7,
+  K_VPID_LOOKUP = 8,
 };
 
 struct mem_event {
