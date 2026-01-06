@@ -19,6 +19,7 @@ enum mem_event_type {
   READ = 3,
   VM_WRITE = 4,
   VM_READ = 5,
+  PROCFS = 6,
 };
 
 struct mem_event {
@@ -122,6 +123,20 @@ int BPF_PROG(restrict_proc_access, struct file *file)
     bool is_parent_protected_pid = bpf_strcmp(protected_pid_s, parent_name) == 0;
 
     if (is_parent_protected_pid) {
+      struct mem_event *e = bpf_ringbuf_reserve(&rb, sizeof(struct mem_event), 0);
+      if (!e)
+        return -EPERM;
+
+      e->type = PROCFS;
+      e->caller = caller_pid;
+      e->target = PROTECTED_PID;
+      bpf_core_read_str(e->filename, sizeof(file->f_path.dentry->d_name.len), file->f_path.dentry->d_name.name);
+      bpf_get_current_comm(e->caller_name, sizeof(e->caller_name));
+
+      bpf_printk("open called by %s(pid %i), for /proc/%i",
+                e->caller_name, e->caller, e->target);
+
+      bpf_ringbuf_submit(e, 0);
       return -EPERM;
     }
     return 0;
