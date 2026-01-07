@@ -13,6 +13,7 @@ target_compile_options(
           -g
           -x
           c
+          -Wno-unused-parameter
           -std=gnu17
           # This is the critical line for Kprobes:
           -D__TARGET_ARCH_x86)

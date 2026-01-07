@@ -98,8 +98,6 @@ int trace_writev(struct trace_event_raw_sys_enter *ctx) {
 
 SEC("lsm/file_open")
 int BPF_PROG(restrict_proc_access, struct file *file) {
-  (void)ctx;  // Get rid of warnings in compiler
-  (void)file; // Get rid of warnings in compiler
 
   pid_t caller_pid = bpf_get_current_pid_tgid() >> 32;
   if (caller_pid == PROTECTED_PID)
@@ -151,9 +149,6 @@ int BPF_PROG(restrict_proc_access, struct file *file) {
 
 SEC("kprobe/find_vpid")
 int BPF_KPROBE(kprobe_find_vpid, int nr) {
-  (void)ctx; // Get rid of compiler warnings
-  (void)nr;  // Get rid of compiler warnings
-
   pid_t looked_up_pid = (pid_t)nr;
 
   if (looked_up_pid != PROTECTED_PID) {
@@ -176,7 +171,6 @@ int BPF_KPROBE(kprobe_find_vpid, int nr) {
 
 SEC("kretprobe/pid_task")
 int BPF_KRETPROBE(kprobe_pid_task_exit, struct task_struct *return_val) {
-  (void)ctx; // Get rid of compiler warnings
   pid_t looked_up_pid = BPF_CORE_READ(return_val, pid);
 
   if (looked_up_pid != PROTECTED_PID) {
