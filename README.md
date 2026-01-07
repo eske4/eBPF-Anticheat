@@ -64,5 +64,5 @@ Alternatively, use the default run target:
 make run
 ```
 
-The `make run` target attaches to a predefined PID (default: `792`).
+The `make run` target attaches to a predefined PID (default: `1`).
 You can modify this value in the `Makefile`.
