@@ -14,8 +14,8 @@ target_compile_options(
           -x
           c
           -std=gnu17
-          -fno-builtin # Stop the compiler from assuming it knows what 'bool' is
-          -D__TARGET_ARCH_${BPF_ARCH})
+          # This is the critical line for Kprobes:
+          -D__TARGET_ARCH_x86)
 # 1. Map skeletons to their specific object files
 
 foreach(src ${EBPF_PROGRAMS})
