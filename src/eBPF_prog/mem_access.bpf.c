@@ -10,10 +10,9 @@ char LICENSE[] SEC("license") = "Dual BSD/GPL";
 #define MY_FILENAME_LEN 64
 #define PROC_SUPER_MAGIC 0x9fa0
 
-
 volatile const pid_t PROTECTED_PID;
 
-enum mem_event_type: uint32_t {
+enum mem_event_type : uint32_t {
   PTRACE = 0,
   OPEN = 1,
   WRITE = 2,
@@ -64,8 +63,7 @@ int ptrace_entry(struct trace_event_raw_sys_enter *ctx) {
   return 0;
 }
 
-int handle_process_vm_rw(pid_t pid, bool is_write)
-{
+int handle_process_vm_rw(pid_t pid, bool is_write) {
   if (pid != PROTECTED_PID)
     return 0;
 
@@ -87,22 +85,22 @@ int handle_process_vm_rw(pid_t pid, bool is_write)
 }
 
 SEC("tp/syscalls/sys_enter_process_vm_readv")
-int trace_readv(struct trace_event_raw_sys_enter *ctx)
-{
+int trace_readv(struct trace_event_raw_sys_enter *ctx) {
   pid_t pid = (pid_t)BPF_CORE_READ(ctx, args[0]);
   return handle_process_vm_rw(pid, false);
 }
 
 SEC("tp/syscalls/sys_enter_process_vm_writev")
-int trace_writev(struct trace_event_raw_sys_enter *ctx)
-{
+int trace_writev(struct trace_event_raw_sys_enter *ctx) {
   pid_t pid = (pid_t)BPF_CORE_READ(ctx, args[0]);
   return handle_process_vm_rw(pid, true);
 }
 
 SEC("lsm/file_open")
-int BPF_PROG(restrict_proc_access, struct file *file)
-{
+int BPF_PROG(restrict_proc_access, struct file *file) {
+  (void)ctx;  // Get rid of warnings in compiler
+  (void)file; // Get rid of warnings in compiler
+
   pid_t caller_pid = bpf_get_current_pid_tgid() >> 32;
   if (caller_pid == PROTECTED_PID)
     return 0;
@@ -112,45 +110,50 @@ int BPF_PROG(restrict_proc_access, struct file *file)
     return 0; // return if not part of procfs
 
   // file->f_path.dentry->d_name.name
-  char *name = (char*)BPF_CORE_READ(file, f_path.dentry, d_name.name);
+  char *name = (char *)BPF_CORE_READ(file, f_path.dentry, d_name.name);
 
-  bool is_restricted_file_name = (bpf_strcmp(name, "maps") == 0 || 
-                                  bpf_strcmp(name, "smaps") == 0 || 
-                                  bpf_strcmp(name, "mem") == 0);
-  if (is_restricted_file_name)
-  {
-    char *parent_name = (char*)BPF_CORE_READ(file, f_path.dentry, d_parent, d_name.name);
+  bool is_restricted_file_name =
+      (bpf_strcmp(name, "maps") == 0 || bpf_strcmp(name, "smaps") == 0 ||
+       bpf_strcmp(name, "mem") == 0);
+  if (is_restricted_file_name) {
+    char *parent_name =
+        (char *)BPF_CORE_READ(file, f_path.dentry, d_parent, d_name.name);
     char protected_pid_s[16];
     BPF_SNPRINTF(protected_pid_s, sizeof(protected_pid_s), "%d", PROTECTED_PID);
 
-    bool is_parent_protected_pid = bpf_strcmp(protected_pid_s, parent_name) == 0;
+    bool is_parent_protected_pid =
+        bpf_strcmp(protected_pid_s, parent_name) == 0;
 
     if (is_parent_protected_pid) {
-      struct mem_event *e = bpf_ringbuf_reserve(&rb, sizeof(struct mem_event), 0);
+      struct mem_event *e =
+          bpf_ringbuf_reserve(&rb, sizeof(struct mem_event), 0);
       if (!e)
         return -EPERM;
 
       e->type = PROCFS;
       e->caller = caller_pid;
       e->target = PROTECTED_PID;
-      bpf_core_read_str(e->filename, sizeof(file->f_path.dentry->d_name.len), file->f_path.dentry->d_name.name);
+      bpf_core_read_str(e->filename, sizeof(file->f_path.dentry->d_name.len),
+                        file->f_path.dentry->d_name.name);
       bpf_get_current_comm(e->caller_name, sizeof(e->caller_name));
 
-      bpf_printk("open called by %s(pid %i), for /proc/%i",
-                e->caller_name, e->caller, e->target);
+      bpf_printk("open called by %s(pid %i), for /proc/%i", e->caller_name,
+                 e->caller, e->target);
 
       bpf_ringbuf_submit(e, 0);
       return -EPERM;
     }
     return 0;
   }
-  
+
   return 0;
 }
 
 SEC("kprobe/find_vpid")
-int BPF_KPROBE(kprobe_find_vpid, int nr)
-{
+int BPF_KPROBE(kprobe_find_vpid, int nr) {
+  (void)ctx; // Get rid of compiler warnings
+  (void)nr;  // Get rid of compiler warnings
+
   pid_t looked_up_pid = (pid_t)nr;
 
   if (looked_up_pid != PROTECTED_PID) {
@@ -166,20 +169,20 @@ int BPF_KPROBE(kprobe_find_vpid, int nr)
   e->target = looked_up_pid;
   bpf_get_current_comm(e->caller_name, sizeof(e->caller_name));
   bpf_ringbuf_submit(e, 0);
-  
+
   bpf_printk("vpid lookup by %s, arg: %i", e->caller_name, nr);
   return 0;
 }
 
 SEC("kretprobe/pid_task")
-int BPF_KRETPROBE(kprobe_pid_task_exit, struct task_struct *return_val)
-{
+int BPF_KRETPROBE(kprobe_pid_task_exit, struct task_struct *return_val) {
+  (void)ctx; // Get rid of compiler warnings
   pid_t looked_up_pid = BPF_CORE_READ(return_val, pid);
-  
+
   if (looked_up_pid != PROTECTED_PID) {
     return 0;
   }
-  
+
   struct mem_event *e = bpf_ringbuf_reserve(&rb, sizeof(struct mem_event), 0);
   if (!e)
     return 0;
